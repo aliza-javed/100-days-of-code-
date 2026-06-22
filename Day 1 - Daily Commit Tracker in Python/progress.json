@@ -1,0 +1,21 @@
+{
+  "days": [
+    {
+      "day": 1,
+      "date": "2026-06-21",
+      "project": "TrackerApp",
+      "goal": "creating app",
+      "language": "python",
+      "completed": true
+    },
+    {
+      "day": 2,
+      "date": "2026-06-21",
+      "project": "Surat",
+      "goal": "create my painting",
+      "language": "reactjs",
+      "completed": true
+    }
+  ],
+  "current_streak": 2
+}
