@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛒 My Shop - FastAPI Connected</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6741 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        #api-status {
+            padding: 15px;
+            margin: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+
+        .nav button {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: #6c757d;
+            color: white;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .nav button:hover {
+            background: #495057;
+            transform: translateY(-2px);
+        }
+
+        .nav button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .section {
+            padding: 30px;
+            min-height: 400px;
+        }
+
+        .section.hidden {
+            display: none;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #495057;
+            margin: 20px 0 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-left: 5px solid #667eea;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .card h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            color: #6c757d;
+            margin: 3px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-confirmed { background: #d1ecf1; color: #0c5460; }
+        .badge-shipped { background: #d4edda; color: #155724; }
+        .badge-delivered { background: #c3e6cb; color: #155724; }
+        .badge-cancelled { background: #f8d7da; color: #721c24; }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 My Shop</h1>
+            <p>FastAPI Backend se Connected Frontend</p>
+        </div>
+
+        <div id="api-status">⏳ Checking API...</div>
+
+        <div class="nav">
+            <button onclick="showSection('users')" class="active" id="btn-users">👤 Users</button>
+            <button onclick="showSection('products')" id="btn-products">📦 Products</button>
+            <button onclick="showSection('orders')" id="btn-orders">🛍️ Orders</button>
+        </div>
+
+        <!-- ============== USERS SECTION ============== -->
+        <div id="users-section" class="section">
+            <h2>👤 Users Management</h2>
+
+            <h3>➕ Naya User Banao</h3>
+            <form onsubmit="createUser(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Username *</label>
+                        <input type="text" id="username" placeholder="aliza_dev" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" placeholder="aliza@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password * (min 8 chars, 1 upper, 1 lower, 1 digit, 1 special)</label>
+                        <input type="text" id="password" placeholder="Secure@123" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="full_name" placeholder="Aliza Javed" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Age *</label>
+                        <input type="number" id="age" value="22" min="13" max="120" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="role">
+                            <option value="viewer">viewer</option>
+                            <option value="editor">editor</option>
+                            <option value="admin">admin</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">✅ User Banao</button>
+                <button type="button" class="btn" onclick="loadUsers()">🔄 Users Load Karo</button>
+            </form>
+
+            <h3>📋 Sab Users (<span id="users-count">0</span>)</h3>
+            <div id="users-list">
+                <p class="empty">Abhi koi user nahi. Upar wale button se load karo ya naya banao! 👆</p>
+            </div>
+        </div>
+
+        <!-- ============== PRODUCTS SECTION ============== -->
+        <div id="products-section" class="section hidden">
+            <h2>📦 Products Management</h2>
+
+            <h3>➕ Naya Product Banao</h3>
+            <form onsubmit="createProduct(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" id="p_name" placeholder="Python Book" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU * (format: BK-001234)</label>
+                        <input type="text" id="p_sku" placeholder="BK-001234" required>
+                    </div>
+                    <div class="form-group full">
+                        <label>Description * (min 10 chars)</label>
+                        <textarea id="p_desc" rows="2" placeholder="Complete guide to Python programming..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Price * ($)</label>
+                        <input type="number" step="0.01" id="p_price" placeholder="29.99" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Discount (%)</label>
+                        <input type="number" step="0.1" id="p_discount" value="0" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock *</label>
+                        <input type="number" id="p_stock" placeholder="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="p_category" required>
+                            <option value="">-- Choose --</option>
+                            <option value="books">📚 books</option>
+                            <option value="electronics">💻 electronics</option>
+                            <option value="clothing">👕 clothing</option>
+                            <option value="food">🍔 food</option>
+                            <option value="other">📦 other</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">✅ Product Banao</button>
+                <button type="button" class="btn" onclick="loadProducts()">🔄 Products Load Karo</button>
+            </form>
+
+            <h3>📋 Sab Products (<span id="products-count">0</span>)</h3>
+            <div id="products-list">
+                <p class="empty">Abhi koi product nahi. Upar se create karo! 👆</p>
+            </div>
+        </div>
+
+        <!-- ============== ORDERS SECTION ============== -->
+        <div id="orders-section" class="section hidden">
+            <h2>🛍️ Orders Management</h2>
+
+            <h3>➕ Naya Order Place Karo</h3>
+            <p style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                💡 <b>Tip:</b> Pehle User aur Product banao, phir yahan ID daalke order banao.
+            </p>
+            <form onsubmit="createOrder(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>User ID *</label>
+                        <input type="number" id="o_user_id" value="1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Product ID *</label>
+                        <input type="number" id="o_product_id" value="1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity *</label>
+                        <input type="number" id="o_quantity" value="1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Price * ($)</label>
+                        <input type="number" step="0.01" id="o_price" value="29.99" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method *</label>
+                        <select id="o_payment" required>
+                            <option value="card">💳 Card</option>
+                            <option value="cash">💵 Cash</option>
+                            <option value="bank_transfer">🏦 Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="form-group full">
+                        <label>Delivery Address * (min 10 chars)</label>
+                        <textarea id="o_address" rows="2" placeholder="123 Main Street, Islamabad, Pakistan" required></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">🛒 Order Place Karo</button>
+                <button type="button" class="btn" onclick="loadOrders()">🔄 Orders Load Karo</button>
+            </form>
+
+            <h3>📋 Sab Orders (<span id="orders-count">0</span>)</h3>
+            <div id="orders-list">
+                <p class="empty">Abhi koi order nahi. Upar se create karo! 👆</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API = "http://127.0.0.1:8000";
+
+        // ============================================
+        // PAGE LOAD - API STATUS CHECK
+        // ============================================
+        window.addEventListener('load', async () => {
+            const statusDiv = document.getElementById('api-status');
+            try {
+                const res = await fetch(`${API}/`);
+                if (res.ok) {
+                    const data = await res.json();
+                    statusDiv.className = 'status-success';
+                    statusDiv.innerHTML = `✅ API Connected! Project: <b>${data.project}</b> v${data.version}`;
+                    // Auto load users on startup
+                    loadUsers();
+                } else {
+                    throw new Error('Not OK');
+                }
+            } catch (err) {
+                statusDiv.className = 'status-error';
+                statusDiv.innerHTML = `❌ API se connect nahi ho saka!<br>Terminal mein ye chalao: <code>uvicorn app.main:app --reload</code>`;
+            }
+        });
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`${name}-section`).classList.remove('hidden');
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${name}`).classList.add('active');
+
+            // Auto load data when switching tabs
+            if (name === 'users') loadUsers();
+            if (name === 'products') loadProducts();
+            if (name === 'orders') loadOrders();
+        }
+
+        // ============================================
+        // USERS FUNCTIONS
+        // ============================================
+        async function createUser(e) {
+            e.preventDefault();
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                full_name: document.getElementById('full_name').value,
+                age: parseInt(document.getElementById('age').value),
+                role: document.getElementById('role').value
+            };
+
+            try {
+                const res = await fetch(`${API}/api/v1/users/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert(`🎉 User Ban Gaya!\nID: ${result.id}\nName: ${result.full_name}`);
+                    e.target.reset();
+                    loadUsers();
+                } else {
+                    let errMsg = "❌ Validation Error:\n\n";
+                    if (result.errors) {
+                        result.errors.forEach(err => {
+                            errMsg += `• ${err.field}: ${err.message}\n`;
+                        });
+                    } else {
+                        errMsg += JSON.stringify(result, null, 2);
+                    }
+                    alert(errMsg);
+                }
+            } catch (err) {
+                alert('❌ Network Error: ' + err.message);
+            }
+        }
+
+        async function loadUsers() {
+            const list = document.getElementById('users-list');
+            const count = document.getElementById('users-count');
+            list.innerHTML = '<p class="loading">⏳ Loading users...</p>';
+
+            try {
+                const res = await fetch(`${API}/api/v1/users/`);
+                const users = await res.json();
+                count.textContent = users.length;
+
+                if (users.length === 0) {
+                    list.innerHTML = '<p class="empty">😢 Koi user nahi mila. Upar se create karo!</p>';
+                    return;
+                }
+
+                list.innerHTML = users.map(u => `
+                    <div class="card">
+                        <h4>👤 ${u.full_name} (@${u.username})</h4>
+                        <p>📧 ${u.email}</p>
+                        <p>🎂 Age: ${u.age} | 🔰 Role: <b>${u.role}</b></p>
+                        <p>🆔 ID: ${u.id}</p>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="empty">❌ Error loading users</p>';
+            }
+        }
+
+        // ============================================
+        // PRODUCTS FUNCTIONS
+        // ============================================
+        async function createProduct(e) {
+            e.preventDefault();
+            const productData = {
+                name: document.getElementById('p_name').value,
+                description: document.getElementById('p_desc').value,
+                price: parseFloat(document.getElementById('p_price').value),
+                discount: parseFloat(document.getElementById('p_discount').value) || 0,
+                stock: parseInt(document.getElementById('p_stock').value),
+                category: document.getElementById('p_category').value,
+                sku: document.getElementById('p_sku').value,
+                tags: []
+            };
+
+            try {
+                const res = await fetch(`${API}/api/v1/products/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert(`🎉 Product Ban Gaya!\nID: ${result.id}\nName: ${result.name}\nFinal Price: $${result.final_price}`);
+                    e.target.reset();
+                    loadProducts();
+                } else {
+                    let errMsg = "❌ Validation Error:\n\n";
+                    if (result.errors) {
+                        result.errors.forEach(err => {
+                            errMsg += `• ${err.field}: ${err.message}\n`;
+                        });
+                    } else {
+                        errMsg += JSON.stringify(result, null, 2);
+                    }
+                    alert(errMsg);
+                }
+            } catch (err) {
+                alert('❌ Network Error: ' + err.message);
+            }
+        }
+
+        async function loadProducts() {
+            const list = document.getElementById('products-list');
+            const count = document.getElementById('products-count');
+            list.innerHTML = '<p class="loading">⏳ Loading products...</p>';
+
+            try {
+                const res = await fetch(`${API}/api/v1/products/`);
+                const products = await res.json();
+                count.textContent = products.length;
+
+                if (products.length === 0) {
+                    list.innerHTML = '<p class="empty">😢 Koi product nahi mila. Upar se create karo!</p>';
+                    return;
+                }
+
+                list.innerHTML = products.map(p => {
+                    const categoryEmoji = {
+                        'books': '📚', 'electronics': '💻',
+                        'clothing': '👕', 'food': '🍔', 'other': '📦'
+                    };
+                    return `
+                        <div class="card">
+                            <h4>${categoryEmoji[p.category] || '📦'} ${p.name}</h4>
+                            <p>💰 Price: <b>$${p.price}</b> | 🏷️ Final: <b style="color:#28a745">$${p.final_price}</b></p>
+                            <p>📦 Stock: ${p.stock > 0 ? '✅ ' + p.stock : '❌ Out of Stock'}</p>
+                            <p>🏷️ SKU: <code>${p.sku}</code> | 📂 ${p.category}</p>
+                            <p>🆔 ID: ${p.id}</p>
+                            <p style="color:#6c757d; font-size:0.9em">${p.description}</p>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="empty">❌ Error loading products</p>';
+            }
+        }
+
+        // ============================================
+        // ORDERS FUNCTIONS
+        // ============================================
+        async function createOrder(e) {
+            e.preventDefault();
+            const orderData = {
+                user_id: parseInt(document.getElementById('o_user_id').value),
+                items: [{
+                    product_id: parseInt(document.getElementById('o_product_id').value),
+                    quantity: parseInt(document.getElementById('o_quantity').value),
+                    unit_price: document.getElementById('o_price').value
+                }],
+                payment_method: document.getElementById('o_payment').value,
+                delivery_address: document.getElementById('o_address').value
+            };
+
+            try {
+                const res = await fetch(`${API}/api/v1/orders/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert(`🎉 Order Place Ho Gaya!\nID: ${result.id}\nTotal: $${result.total}\nStatus: ${result.status}`);
+                    e.target.reset();
+                    loadOrders();
+                } else {
+                    let errMsg = "❌ Validation Error:\n\n";
+                    if (result.errors) {
+                        result.errors.forEach(err => {
+                            errMsg += `• ${err.field}: ${err.message}\n`;
+                        });
+                    } else {
+                        errMsg += JSON.stringify(result, null, 2);
+                    }
+                    alert(errMsg);
+                }
+            } catch (err) {
+                alert('❌ Network Error: ' + err.message);
+            }
+        }
+
+        async function loadOrders() {
+            const list = document.getElementById('orders-list');
+            const count = document.getElementById('orders-count');
+            list.innerHTML = '<p class="loading">⏳ Loading orders...</p>';
+
+            try {
+                const res = await fetch(`${API}/api/v1/orders/`);
+                const orders = await res.json();
+                count.textContent = orders.length;
+
+                if (orders.length === 0) {
+                    list.innerHTML = '<p class="empty">😢 Koi order nahi mila. Upar se create karo!</p>';
+                    return;
+                }
+
+                list.innerHTML = orders.map(o => `
+                    <div class="card">
+                        <h4>🛍️ Order #${o.id}</h4>
+                        <p>💰 Total: <b style="color:#28a745; font-size:1.2em">$${o.total}</b></p>
+                        <p>📊 Status: <span class="badge badge-${o.status}">${o.status}</span></p>
+                        <p>💳 Payment: ${o.payment_method}</p>
+                        <p>👤 User ID: ${o.user_id}</p>
+                        <p>📦 Items: ${o.items.length}</p>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="empty">❌ Error loading orders</p>';
+            }
+        }
+    </script>
+</body>
+</html>
