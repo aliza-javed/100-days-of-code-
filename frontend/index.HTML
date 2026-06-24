@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JWT Auth Playground</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0A1128;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .app-container {
+            background: #F7F9FC;
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            min-height: 80vh;
+            box-shadow: 0 25px 60px rgba(10, 17, 40, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 1.5rem 2.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #0A1128;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-bracket { color: #2EC4B6; font-weight: 400; }
+
+        .logo-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.4em;
+            background: #2EC4B6;
+            margin-left: 0.15em;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%   { opacity: 1; }
+            50.1%, 100% { opacity: 0; }
+        }
+
+        .nav { display: flex; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; }
+
+        .nav a {
+            color: #4A5568;
+            text-decoration: none;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover  { background: #EDF2F7; color: #0A1128; }
+        .nav a.active { background: #0A1128; color: white; }
+
+        /* Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Left panel */
+        .left-panel {
+            padding: 2rem 2rem 2rem 2.5rem;
+            border-right: 1px solid #E2E8F0;
+            background: white;
+            overflow-y: auto;
+        }
+
+        .panel-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            color: #A0AEC0;
+            margin-bottom: 1.25rem;
+        }
+
+        .flow-step { margin-bottom: 0.75rem; }
+
+        .flow-step summary {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            background: #F7F9FC;
+            border: 1px solid #EDF2F7;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #2D3748;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            list-style: none;
+        }
+
+        .flow-step summary::-webkit-details-marker { display: none; }
+        .flow-step summary:hover { background: #EDF2F7; border-color: #CBD5E0; }
+
+        .step-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background: #E2E8F0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #4A5568;
+            flex-shrink: 0;
+        }
+
+        .flow-step[open] summary .step-indicator { background: #2EC4B6; color: white; }
+
+        .step-body { padding: 0.75rem 1rem 0.5rem 3.25rem; }
+
+        .step-body .form-group { margin-bottom: 0.75rem; }
+
+        .step-body label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #718096;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-body input,
+        .step-body select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: white;
+            color: #1A202C;
+            transition: border 0.2s;
+        }
+
+        .step-body input:focus,
+        .step-body select:focus {
+            outline: none;
+            border-color: #2EC4B6;
+            box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.15);
+        }
+
+        .btn {
+            padding: 0.55rem 1.25rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            background: #0A1128;
+            color: white;
+        }
+
+        .btn:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10,17,40,.25); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-secondary { background: #EDF2F7; color: #2D3748; }
+        .btn-secondary:hover { background: #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+
+        .btn-danger  { background: #FF6B6B; color: white; }
+        .btn-danger:hover  { background: #E55A5A; box-shadow: 0 4px 12px rgba(255,107,107,.3); }
+
+        .btn-success { background: #2EC4B6; color: white; }
+        .btn-success:hover { background: #26A89B; box-shadow: 0 4px 12px rgba(46,196,182,.3); }
+
+        .btn-sm { padding: 0.35rem 0.9rem; font-size: 0.7rem; }
+
+        .btn-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+
+        /* Right panel */
+        .right-panel {
+            padding: 2rem 2.5rem 2rem 2rem;
+            background: #F7F9FC;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .response-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .response-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 0.6rem;
+            height: 0.6rem;
+            border-radius: 50%;
+        }
+
+        .status-dot.idle    { background: #CBD5E0; }
+        .status-dot.loading {
+            background: #F6AD55;
+            animation: pulse-dot 0.8s ease-in-out infinite;
+        }
+        .status-dot.success { background: #2EC4B6; }
+        .status-dot.error   { background: #FF6B6B; }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .response-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .response-code.code-2xx { color: #2EC4B6; }
+        .response-code.code-4xx { color: #FF6B6B; }
+
+        .response-body {
+            flex: 1;
+            background: #0A1128;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: #E2E8F0;
+            overflow: auto;
+            min-height: 200px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .response-body .json-key     { color: #F6AD55; }
+        .response-body .json-string  { color: #2EC4B6; }
+        .response-body .json-number  { color: #63B3ED; }
+        .response-body .json-boolean { color: #FC8181; }
+        .response-body .json-null    { color: #A0AEC0; }
+        .response-body .placeholder  { color: #4A5568; font-style: italic; }
+
+        .token-display {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid #E2E8F0;
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            word-break: break-all;
+            color: #2D3748;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .token-display .label {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #A0AEC0;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Status bar */
+        .status-bar {
+            padding: 0.6rem 2.5rem;
+            border-top: 1px solid #E2E8F0;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            font-size: 0.7rem;
+            color: #4A5568;
+            font-weight: 500;
+            flex-wrap: wrap;
+        }
+
+        .status-item { display: flex; align-items: center; gap: 0.4rem; }
+
+        .status-item .dot {
+            width: 0.4rem;
+            height: 0.4rem;
+            border-radius: 50%;
+        }
+
+        .status-item .dot.online  { background: #2EC4B6; }
+        .status-item .dot.offline { background: #FF6B6B; }
+
+        .status-divider { color: #E2E8F0; }
+
+        .role-badge {
+            padding: 0.15rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: #EDF2F7;
+            color: #4A5568;
+        }
+
+        .role-badge.admin  { background: #0A1128; color: white; }
+        .role-badge.editor { background: #2EC4B6; color: white; }
+        .role-badge.viewer { background: #E2E8F0; color: #4A5568; }
+
+        /* Responsive */
+        @media (max-width: 860px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #E2E8F0;
+                padding: 1.5rem;
+            }
+            .right-panel { padding: 1.5rem; }
+            .header      { padding: 1rem 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+            .nav         { flex-wrap: wrap; }
+            .status-bar  { padding: 0.6rem 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+            .app-container { border-radius: 1rem; min-height: auto; }
+            body { padding: 0.75rem; }
+        }
+
+        @media (max-width: 480px) {
+            .logo { font-size: 1rem; }
+            .step-body { padding-left: 0; }
+            .step-body .btn-row { flex-direction: column; }
+            .step-body .btn-row .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <span class="logo-bracket">⌨</span>
+            auth<span class="logo-cursor"></span>
+        </div>
+        <nav class="nav">
+            <a href="#" class="active">Playground</a>
+            <a href="/docs" target="_blank">Swagger</a>
+            <a href="/redoc" target="_blank">ReDoc</a>
+        </nav>
+    </header>
+
+    <!-- Main -->
+    <div class="main-grid">
+
+        <!-- Left: Flow steps -->
+        <section class="left-panel">
+            <div class="panel-label">Auth Flow</div>
+
+            <!-- Register -->
+            <details class="flow-step" open>
+                <summary><span class="step-indicator">1</span>Register</summary>
+                <div class="step-body">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="reg-username" value="dev_user" />
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="reg-email" value="dev@test.com" />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="reg-password" value="Dev@1234" />
+                    </div>
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="reg-fullname" value="Dev User" />
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="reg-role">
+                            <option value="admin">Admin</option>
+                            <option value="editor">Editor</option>
+                            <option value="viewer" selected>Viewer</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="handleRegister()">Create Account</button>
+                </div>
+            </details>
+
+            <!-- Login -->
+            <details class="flow-step">
+                <summary><span class="step-indicator">2</span>Login</summary>
+                <div class="step-body">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="login-username" value="dev_user" />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="login-password" value="Dev@1234" />
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="handleLogin()">Get Tokens</button>
+                </div>
+            </details>
+
+            <!-- Refresh -->
+            <details class="flow-step">
+                <summary><span class="step-indicator">3</span>Refresh</summary>
+                <div class="step-body">
+                    <div class="form-group">
+                        <label>Refresh Token</label>
+                        <input type="text" id="refresh-token" placeholder="Paste refresh token here" />
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="handleRefresh()">Rotate Token</button>
+                </div>
+            </details>
+
+            <!-- Logout -->
+            <details class="flow-step">
+                <summary><span class="step-indicator">4</span>Logout</summary>
+                <div class="step-body">
+                    <div class="form-group">
+                        <label>Access Token</label>
+                        <input type="text" id="logout-token" placeholder="Paste access token here" />
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="handleLogout()">Revoke Token</button>
+                </div>
+            </details>
+
+            <!-- Change Password -->
+            <details class="flow-step">
+                <summary><span class="step-indicator">5</span>Change Password</summary>
+                <div class="step-body">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="cp-current" placeholder="Current password" />
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="cp-new" placeholder="New password" />
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="handleChangePassword()">Update</button>
+                </div>
+            </details>
+
+            <!-- Me -->
+            <details class="flow-step">
+                <summary><span class="step-indicator">6</span>Who Am I?</summary>
+                <div class="step-body">
+                    <div class="form-group">
+                        <label>Access Token</label>
+                        <input type="text" id="me-token" placeholder="Paste access token here" />
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="handleMe()">Get Profile</button>
+                </div>
+            </details>
+        </section>
+
+        <!-- Right: Response -->
+        <section class="right-panel">
+            <div class="response-header">
+                <div class="response-status">
+                    <span class="status-dot idle" id="status-dot"></span>
+                    <span id="status-text">Ready</span>
+                </div>
+                <span class="response-code" id="response-code">—</span>
+            </div>
+
+            <div class="response-body" id="response-body">
+                <span class="placeholder">Send a request to see the response here…</span>
+            </div>
+
+            <div class="token-display" id="token-display">
+                <span class="label">Stored Access Token</span>
+                <span id="token-content" style="color:#A0AEC0;">No tokens yet</span>
+            </div>
+        </section>
+    </div>
+
+    <!-- Status bar -->
+    <footer class="status-bar">
+        <span class="status-item">
+            <span class="dot online" id="api-dot"></span>
+            <span id="api-text">API Online</span>
+        </span>
+        <span class="status-divider">|</span>
+        <span class="status-item">
+            <span class="dot" id="auth-dot" style="background:#CBD5E0;"></span>
+            <span id="auth-status">Unauthenticated</span>
+        </span>
+        <span class="status-divider">|</span>
+        <span class="status-item">
+            Role: <span class="role-badge" id="role-badge">—</span>
+        </span>
+        <span style="margin-left:auto; color:#A0AEC0; font-size:0.6rem;">
+            v1.0 · JWT Auth
+        </span>
+    </footer>
+</div>
+
+<script>
+    // ── State ──────────────────────────────────────────────────────────
+    const state = { accessToken: null, refreshToken: null, user: null };
+    const API_BASE = 'http://localhost:8000';
+
+    // ── DOM refs ──────────────────────────────────────────────────────
+    const $ = (id) => document.getElementById(id);
+    const statusDot   = $('status-dot');
+    const statusText  = $('status-text');
+    const responseCode = $('response-code');
+    const responseBody = $('response-body');
+    const tokenContent = $('token-content');
+    const authDot     = $('auth-dot');
+    const authStatus  = $('auth-status');
+    const roleBadge   = $('role-badge');
+    const apiDot      = $('api-dot');
+    const apiText     = $('api-text');
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    function setStatus(type, text, code = null) {
+        statusDot.className = 'status-dot ' + type;
+        statusText.textContent = text;
+        if (code) {
+            const isSuccess = code < 400;
+            responseCode.textContent = code;
+            responseCode.className = 'response-code ' + (isSuccess ? 'code-2xx' : 'code-4xx');
+        } else {
+            responseCode.textContent = '—';
+            responseCode.className = 'response-code';
+        }
+    }
+
+    function setResponse(data, code) {
+        if (typeof data === 'object') {
+            responseBody.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+        } else {
+            responseBody.textContent = data;
+        }
+        setStatus(code < 400 ? 'success' : 'error', code < 400 ? 'Success' : 'Error', code);
+    }
+
+    function syntaxHighlight(json) {
+        return json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/g, (m) => {
+                if (/:$/.test(m)) return `<span class="json-key">${m}</span>`;
+                return `<span class="json-string">${m}</span>`;
+            })
+            .replace(/\b(true|false)\b/g, '<span class="json-boolean">$1</span>')
+            .replace(/\b(null)\b/g,    '<span class="json-null">$1</span>')
+            .replace(/\b(\d+)\b/g,     '<span class="json-number">$1</span>');
+    }
+
+    function updateTokens() {
+        if (state.accessToken) {
+            tokenContent.textContent = state.accessToken.slice(0, 80) + '…';
+            tokenContent.style.color = '#2D3748';
+            authDot.className = 'dot online';
+            authStatus.textContent = 'Authenticated';
+            roleBadge.textContent = state.user?.role || 'unknown';
+            roleBadge.className = 'role-badge ' + (state.user?.role || '');
+            $('logout-token').value = state.accessToken;
+            $('me-token').value = state.accessToken;
+        } else {
+            tokenContent.textContent = 'No tokens yet';
+            tokenContent.style.color = '#A0AEC0';
+            authDot.className = 'dot offline';
+            authStatus.textContent = 'Unauthenticated';
+            roleBadge.textContent = '—';
+            roleBadge.className = 'role-badge';
+        }
+    }
+
+    function handleError(err) {
+        setStatus('error', 'Error');
+        responseBody.textContent = err.message || 'Request failed';
+        responseCode.textContent = '—';
+        responseCode.className = 'response-code';
+    }
+
+    // ── API calls ──────────────────────────────────────────────────────
+    async function apiCall(method, path, body = null, headers = {}) {
+        const options = {
+            method,
+            headers: { 'Content-Type': 'application/json', ...headers },
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        setStatus('loading', 'Sending…');
+
+        try {
+            const res = await fetch(API_BASE + path, options);
+            let data;
+            try { data = await res.json(); }
+            catch { data = await res.text(); }
+            setResponse(data, res.status);
+            return { data, status: res.status, ok: res.ok };
+        } catch (err) {
+            handleError(err);
+            return { data: null, status: 0, ok: false };
+        }
+    }
+
+    // ── Handlers ──────────────────────────────────────────────────────
+    async function handleRegister() {
+        const payload = {
+            username:  $('reg-username').value.trim(),
+            email:     $('reg-email').value.trim(),
+            password:  $('reg-password').value,
+            full_name: $('reg-fullname').value.trim(),
+            role:      $('reg-role').value,
+        };
+        if (!payload.username || !payload.email || !payload.password) {
+            setStatus('error', 'Please fill all fields');
+            return;
+        }
+        const { ok } = await apiCall('POST', '/auth/register', payload);
+        if (ok) {
+            $('login-username').value = payload.username;
+            $('login-password').value = payload.password;
+        }
+    }
+
+    async function handleLogin() {
+        const username = $('login-username').value.trim();
+        const password = $('login-password').value;
+        if (!username || !password) {
+            setStatus('error', 'Username and password required');
+            return;
+        }
+        const { data, ok } = await apiCall('POST', '/auth/login', { username, password });
+        if (ok) {
+            state.accessToken  = data.access_token;
+            state.refreshToken = data.refresh_token;
+            const me = await apiCall('GET', '/auth/me', null, {
+                'Authorization': 'Bearer ' + state.accessToken,
+            });
+            if (me.ok) state.user = me.data;
+            updateTokens();
+            $('refresh-token').value = state.refreshToken;
+            $('logout-token').value  = state.accessToken;
+            $('me-token').value      = state.accessToken;
+        }
+    }
+
+    async function handleRefresh() {
+        const token = $('refresh-token').value.trim();
+        if (!token) { setStatus('error', 'Refresh token required'); return; }
+        const { data, ok } = await apiCall('POST', '/auth/refresh', null, {
+            'Authorization': 'Bearer ' + token,
+        });
+        if (ok) {
+            state.accessToken = data.access_token;
+            const me = await apiCall('GET', '/auth/me', null, {
+                'Authorization': 'Bearer ' + state.accessToken,
+            });
+            if (me.ok) state.user = me.data;
+            updateTokens();
+            $('logout-token').value = state.accessToken;
+            $('me-token').value     = state.accessToken;
+        }
+    }
+
+    async function handleLogout() {
+        const token = $('logout-token').value.trim();
+        if (!token) { setStatus('error', 'Access token required'); return; }
+        const { ok, status } = await apiCall('POST', '/auth/logout', null, {
+            'Authorization': 'Bearer ' + token,
+        });
+        if (ok || status === 204) {
+            if (token === state.accessToken) {
+                state.accessToken = null;
+                state.refreshToken = null;
+                state.user = null;
+                updateTokens();
+            }
+            setStatus('success', 'Logged out', 204);
+            responseBody.textContent = '✅ Token revoked successfully';
+        }
+    }
+
+    async function handleMe() {
+        const token = $('me-token').value.trim();
+        if (!token) { setStatus('error', 'Access token required'); return; }
+        const { data, ok } = await apiCall('GET', '/auth/me', null, {
+            'Authorization': 'Bearer ' + token,
+        });
+        if (ok) {
+            state.user = data;
+            if (token === state.accessToken) updateTokens();
+        }
+    }
+
+    async function handleChangePassword() {
+        const current = $('cp-current').value;
+        const newPw = $('cp-new').value;
+        const token = state.accessToken;
+        if (!token) { setStatus('error', 'Please login first'); return; }
+        if (!current || !newPw) { setStatus('error', 'Both passwords required'); return; }
+        if (current === newPw) { setStatus('error', 'New password must differ'); return; }
+        const { ok, status } = await apiCall('POST', '/auth/change-password',
+            { current_password: current, new_password: newPw },
+            { 'Authorization': 'Bearer ' + token }
+        );
+        if (ok || status === 204) {
+            setStatus('success', 'Password updated', 204);
+            responseBody.textContent = '✅ Password changed successfully';
+            $('cp-current').value = '';
+            $('cp-new').value = '';
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────
+    async function checkHealth() {
+        try {
+            const res = await fetch(API_BASE + '/health');
+            if (res.ok) {
+                apiDot.className = 'dot online';
+                apiText.textContent = 'API Online';
+            } else {
+                throw new Error();
+            }
+        } catch {
+            apiDot.className = 'dot offline';
+            apiText.textContent = 'API Offline — run: uvicorn app.main:app --reload';
+        }
+    }
+
+    checkHealth();
+    updateTokens();
+    setInterval(checkHealth, 15000);
+
+    // ── Keyboard shortcuts ────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.closest('.step-body')) {
+            const btn = e.target.closest('.step-body').querySelector('.btn');
+            if (btn) btn.click();
+        }
+    });
+</script>
+
+</body>
+</html>
